@@ -76,10 +76,36 @@ ui<-fluidPage(
     column(4,sliderInput('slider',h3('sliderInput'),min=0,max=50,value=c(2,20))))
 )
 
+ui<-fluidPage(
+  titlePanel('example'),
+  sidebarLayout(
+    fluidRow(
+      column(7,radioButtons('radio',h3('choose'),choices=list('horror','action','comedy'))),
+      column(7,selectInput('select',h3('select'),choices=list('R','Python','Java'),selected = 'Java')),
+      column(7,sliderInput('slider',h3('choose a range'),min=0,max=50,value=c(3,30)))
+    ),
+    mainPanel(
+      textOutput('myradio'),
+      textOutput('myselect'),
+      textOutput('myslider')
+    )
+  )
+)
+
 
 # server: function contain the instruction that your computer needs to build your app
+# textOutput(),plotOutput(),imageOutput(),plotlyOutput(),uiOutput(),dataTableOutput()
+# renderText(),renderPlot(),renderImage(),renderPlotly(),renderUI(),renderDataTable()
 server<-function(input,output){
-  
+  output$myradio<-renderText({
+    paste('you prefer to continue with',input$radio,'as your choice of movie genre.')
+  })
+  output$myselect<-renderText({
+    paste('you have selected a ',input$select,'programming.')
+  })
+  output$myslider<-renderText({
+    paste('you prefered range is between',input$slider[1],'and',input$slider[2])
+  })
 }
   
   
@@ -90,3 +116,65 @@ shinyApp(ui=ui,server=server)
 runApp('shiny')
 # if app not in working directory
 #runApp('full path')
+
+
+######################################## exercise ##############################################
+ui<-fluidPage(
+  titlePanel('exercise'),
+  fluidRow(
+    column(3,dateInput('date',h3("Insert today's date:"),value='2026-5-14')),
+    column(3,radioButtons('gender',h3("Gender:"),choices=list('Male','Female'),selected = 'Male')),
+    column(3,textInput('name',h3("Full name:"),value='Donna')),
+    column(3,numericInput('age',h3("Age:"),value=20)),
+    textOutput('newdate'),
+    textOutput('newmember')
+  )
+)
+server<-function(input,output){
+  output$newdate<-renderText({paste('A new membership is register on',input$date,'.')})
+  
+  output$newmember<-renderText({paste(input$gender,'named',input$name,'of age',input$age,'is recorded.')})
+}
+shinyApp(ui=ui,server=server)
+
+library(ggplot2)
+library(RColorBrewer)
+marvel<-read.csv('Marvel.csv',header = T)
+ui<-fluidPage(
+  titlePanel('Marvel character'),
+  fluidRow(
+    column(3,selectInput('select',h3("Select Criteria:"),
+                         choices=list('Durability','Strength','Fighting','Speed','Energy','Intelligence'),
+                         selected ='Intelligence')),
+    textOutput('text'),
+    plotOutput('plot')
+  )
+)
+
+
+server<-function(input,output){
+  a<-reactive({switch(input$select,
+                      'Durability'=marvel$Durability,
+                      'Strength'=marvel$Strength,
+                      'Fighting'=marvel$Fighting,
+                      'Speed'=marvel$Speed,
+                      'Energy'=marvel$Energy,
+                      'Intelligence'=marvel$Intelligence)})
+  
+  output$text<-renderText({paste('Bar chart for',input$select,'of Marvel Characters.')})
+  
+  output$plot<-renderPlot({
+    ndata<-a()
+    newdata<-data.frame(marvel$Character,ndata)
+    names(newdata)<-c('character','criteria')
+    mypal<-colorRampPalette(brewer.pal(9,'Set1'))(23)
+    ggplot(newdata,aes(x=character,y=criteria))+
+      geom_bar(stat='identity',aes(fill=character))+
+      theme(axis.text.x = element_text(angle = 90,vjust=0.5))+
+      scale_fill_manual(values = mypal)
+  })
+}
+
+
+shinyApp(ui=ui,server=server)
+
