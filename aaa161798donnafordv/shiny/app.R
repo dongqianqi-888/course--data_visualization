@@ -178,3 +178,31 @@ server<-function(input,output){
 
 shinyApp(ui=ui,server=server)
 
+library(ggplot2)
+library(maps)
+library(shiny)
+usa<-map_data('state')
+st<-names(table(usa$region))
+ui<-fluidPage(
+  titlePanel('State in USA'),
+  sidebarLayout(
+    sidebarPanel(
+      fluidRow(column(7,radioButtons('radio',h3('select a state:'),choices=st,selected = 'alabama')))),
+    mainPanel(
+      textOutput('usstate'),
+      plotOutput('usmap')
+    )
+  )
+)
+server<-function(input,output){
+  output$usstate<-renderText({
+    paste('this is the state of',input$radio,'.')
+  })
+  output$usmap<-renderPlot({
+    state<-usa[usa$region==input$radio,]
+    ggplot(usa,aes(x=long,y=lat,group=group))+
+      geom_polygon(color='skyblue',fill='lightyellow')+
+      geom_polygon(aes(x=long,y=lat,group=group),data=state,fill='navy')
+  })
+}
+shinyApp(ui=ui,server=server)
